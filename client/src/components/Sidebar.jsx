@@ -6,6 +6,7 @@ const links = [
   { to: '/history', label: 'Visit history' },
   { to: '/blood-bank', label: 'Blood bank' },
   { to: '/ambulance', label: 'Ambulance' },
+  { to: '/doctor', label: 'Doctor Dashboard' },
 ];
 
 export default function Sidebar() {
