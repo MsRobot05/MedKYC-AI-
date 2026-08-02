@@ -7,7 +7,7 @@ import DashboardLayout from './components/DashboardLayout';
 import BloodBank from './pages/BloodBank';
 import Ambulance from './pages/Ambulance';
 import KYCForm from './pages/KYCForm';
-
+import DoctorDashboard from './pages/DoctorDashboard';
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -32,6 +32,7 @@ function AppRoutes() {
       </Route>
       <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/kyc" element={<KYCForm />} />
+      <Route path="/doctor" element={<DoctorDashboard />} />
     </Routes>
   );
 }
