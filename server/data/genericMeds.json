@@ -1,0 +1,8 @@
+[
+  { "brand": "Crocin", "generic": "Paracetamol 500mg", "brandPrice": 30, "genericPrice": 8 },
+  { "brand": "Combiflam", "generic": "Ibuprofen + Paracetamol", "brandPrice": 35, "genericPrice": 10 },
+  { "brand": "Augmentin", "generic": "Amoxicillin + Clavulanic Acid", "brandPrice": 220, "genericPrice": 45 },
+  { "brand": "Glycomet", "generic": "Metformin 500mg", "brandPrice": 55, "genericPrice": 15 },
+  { "brand": "Amlopres", "generic": "Amlodipine 5mg", "brandPrice": 60, "genericPrice": 12 },
+  { "brand": "Pantocid", "generic": "Pantoprazole 40mg", "brandPrice": 95, "genericPrice": 20 }
+]

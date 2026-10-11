@@ -8,6 +8,10 @@ import BloodBank from './pages/BloodBank';
 import Ambulance from './pages/Ambulance';
 import KYCForm from './pages/KYCForm';
 import DoctorDashboard from './pages/DoctorDashboard';
+import History from './pages/History';
+import SymptomCheck from './pages/SymptomCheck';
+import AdminDashboard from './pages/AdminDashboard';
+
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -18,9 +22,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-<Route path="/blood-bank" element={<BloodBank />} />
-<Route path="/ambulance" element={<Ambulance />} />
+
       <Route
         element={
           <ProtectedRoute>
@@ -29,10 +31,16 @@ function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/kyc" element={<KYCForm />} />
+        <Route path="/blood-bank" element={<BloodBank />} />
+        <Route path="/ambulance" element={<Ambulance />} />
+        <Route path="/doctor" element={<DoctorDashboard />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/symptom-check" element={<SymptomCheck />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
+
       <Route path="*" element={<Navigate to="/login" />} />
-      <Route path="/kyc" element={<KYCForm />} />
-      <Route path="/doctor" element={<DoctorDashboard />} />
     </Routes>
   );
 }
