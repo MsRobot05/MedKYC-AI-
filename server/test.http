@@ -1,0 +1,6 @@
+POST http://localhost:5000/api/ai/symptom-checker
+Content-Type: application/json
+
+{
+  "symptoms": "I have fever, cough, headache and sore throat"
+}
