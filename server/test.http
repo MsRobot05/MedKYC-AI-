@@ -4,3 +4,6 @@ Content-Type: application/json
 {
   "symptoms": "I have fever, cough, headache and sore throat"
 }
+
+
+Select-String -Path .env -Pattern "GEMINI_MODEL"
