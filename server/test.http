@@ -6,3 +6,7 @@ Content-Type: application/json
 }
 
 Select-String -Path .env -Pattern "GEMINI_MODEL"
+
+PS C:\Users\Shrestha\medkyc-ai\server> node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+b9c515d334c5fe0bf9e0decf7c4116cdba8f0d01c59587899126d83c5f7978a56d4c10f3fcd64824c5a634fc103d6618
+PS C:\Users\Shrestha\medkyc-
