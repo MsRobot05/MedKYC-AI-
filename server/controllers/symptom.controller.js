@@ -5,7 +5,9 @@ const SYSTEM = `You are a helpful AI health assistant inside a medical app calle
 exports.checkSymptoms = async (req, res) => {
   try {
     const contents = toContents(req.body.messages);
-    if (!contents.length) return res.status(400).json({ reply: 'Please describe your symptoms first.' });
+    if (!contents.length) {
+      return res.status(400).json({ reply: 'Please describe your symptoms first.' });
+    }
 
     const data = await callGemini({
       system_instruction: { parts: [{ text: SYSTEM }] },
@@ -17,14 +19,23 @@ exports.checkSymptoms = async (req, res) => {
       .join('')
       .trim();
 
+    if (!reply) {
+      console.error('Symptom check: empty reply. Finish reason:', data.candidates?.[0]?.finishReason, data.promptFeedback);
+    }
+
     res.json({ reply: reply || 'I could not generate a response. Please try rephrasing.' });
   } catch (err) {
     console.error('Symptom check error:', err.message);
-    const busy = err.status === 429;
-    res.status(500).json({
-      reply: busy
+
+    // On localhost, show the real reason in the chat. In production, keep it generic.
+    const isProd = process.env.NODE_ENV === 'production';
+    const generic =
+      err.status === 429
         ? 'The AI is busy right now (free-tier limit). Wait a minute and try again.'
-        : 'AI assistant unavailable right now. Please consult a doctor directly.',
+        : 'AI assistant unavailable right now. Please consult a doctor directly.';
+
+    res.status(500).json({
+      reply: isProd ? generic : `${generic}\n\n[debug] ${String(err.message).slice(0, 300)}`,
     });
   }
 };

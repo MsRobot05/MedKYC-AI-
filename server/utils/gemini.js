@@ -1,5 +1,6 @@
 // Shared Gemini caller for the symptom chat and the care agent.
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// gemini-2.5-flash returned 404 for this project's key, so the default is the stable alias.
+const DEFAULT_MODEL = 'gemini-flash-latest';
 
 async function callGemini(body) {
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
@@ -16,7 +17,7 @@ async function callGemini(body) {
 
   if (!response.ok) {
     const text = await response.text();
-    const err = new Error(`Gemini ${response.status} (${model}): ${text.slice(0, 400)}`);
+    const err = new Error(`Gemini ${response.status} (model: ${model}): ${text.slice(0, 400)}`);
     err.status = response.status;
     throw err;
   }
@@ -36,5 +37,7 @@ function toContents(messages = []) {
   while (contents.length && contents[0].role === 'model') contents.shift();
   return contents;
 }
+
+console.log(`Gemini model: ${process.env.GEMINI_MODEL || DEFAULT_MODEL}`);
 
 module.exports = { callGemini, toContents };

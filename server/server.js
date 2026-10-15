@@ -1,14 +1,19 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
-
 const http = require('http');
 const { Server } = require('socket.io');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1); // needed behind Render's proxy so rate limiting sees real IPs
 
-app.use(cors());
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim());
+
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 mongoose
@@ -16,45 +21,36 @@ mongoose
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB error:', err));
 
-app.get('/', (req, res) => {
-  res.send('MedKYC-AI backend is running');
+// The Gemini free tier is tiny; this stops one visitor burning the whole quota.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 12,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { reply: 'Too many requests. Wait a minute and try again.' },
 });
+
+app.get('/', (req, res) => res.send('MedKYC-AI backend is running'));
 
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/patient', require('./routes/patient.routes'));
 app.use('/api/bloodbanks', require('./routes/bloodbank.routes'));
 app.use('/api/ambulances', require('./routes/ambulance.routes'));
-app.use('/api/patient', require('./routes/patient.routes'));
 app.use('/api/doctor', require('./routes/doctor.routes'));
-app.use('/api/ai', require('./routes/ai.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
-app.use('/api/symptom', require('./routes/symptom.routes'));
-app.use('/api/medicine', require('./routes/medicine.routes'));
+app.use('/api/symptom', aiLimiter, require('./routes/symptom.routes'));
+//app.use('/api/agent', aiLimiter, require('./routes/agent.routes'));
+
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: '*'
-  }
-});
-
-// Make Socket.io available inside controllers
+const io = new Server(server, { cors: { origin: allowedOrigins } });
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-
-  socket.on('joinBooking', (bookingId) => {
-    console.log(`Socket ${socket.id} joined booking ${bookingId}`);
-    socket.join(bookingId);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('joinBooking', (bookingId) => socket.join(String(bookingId)));
+  socket.on('updateStatus', ({ bookingId, status, lat, lng }) => {
+    io.to(String(bookingId)).emit('statusUpdate', { status, lat, lng });
   });
 });
 
 const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
