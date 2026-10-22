@@ -19,8 +19,18 @@ const patientSchema = new mongoose.Schema(
       shareHistory: { type: Boolean, default: true },
       shareMedications: { type: Boolean, default: true },
     },
+    // Public emergency QR. Off by default; the patient has to turn it on.
+    emergency: {
+      enabled: { type: Boolean, default: false },
+      token: { type: String },
+    },
   },
   { timestamps: true }
+);
+
+patientSchema.index(
+  { 'emergency.token': 1 },
+  { unique: true, partialFilterExpression: { 'emergency.token': { $type: 'string' } } }
 );
 
 module.exports = mongoose.model('Patient', patientSchema);

@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Patient = require('../models/Patient');
 const Visit = require('../models/Visit');
+const { recordAccess } = require('../utils/audit');
 
 const WITHHELD = ['Withheld by patient'];
 
@@ -25,7 +27,9 @@ exports.searchPatients = async (req, res) => {
         { name: { $regex: safe, $options: 'i' } },
         { email: { $regex: safe, $options: 'i' } },
       ],
-    }).select('name email').limit(20);
+    })
+      .select('name email')
+      .limit(20);
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -35,8 +39,12 @@ exports.searchPatients = async (req, res) => {
 exports.getPatientDetails = async (req, res) => {
   try {
     const { patientId } = req.params;
+    if (!mongoose.isValidObjectId(patientId)) return res.status(400).json({ message: 'Invalid patient' });
+
     const patient = await Patient.findOne({ user: patientId });
     const visits = await Visit.find({ patient: patientId }).sort({ createdAt: -1 });
+
+    await recordAccess(patientId, req.user, 'viewed_record');
     res.json({ patient: applyConsent(patient), visits });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -46,6 +54,7 @@ exports.getPatientDetails = async (req, res) => {
 exports.addVisit = async (req, res) => {
   try {
     const { patientId, diagnosis, notes } = req.body;
+    if (!mongoose.isValidObjectId(patientId)) return res.status(400).json({ message: 'Invalid patient' });
     const prescription = Array.isArray(req.body.prescription) ? req.body.prescription : [];
 
     // Safety decision: the allergy check always runs against the FULL record,
@@ -70,6 +79,7 @@ exports.addVisit = async (req, res) => {
       notes,
     });
 
+    await recordAccess(patientId, req.user, 'added_visit');
     res.status(201).json({ message: 'Visit recorded', visit, conflicts });
   } catch (err) {
     res.status(500).json({ message: err.message });

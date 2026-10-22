@@ -1,91 +1,101 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { HeartPulse } from 'lucide-react';
+import AuthShell from '../components/AuthShell';
+import { Button, Notice, C } from '../components/ui';
+
+const DEMO_PASSWORD = 'demo1234';
+const DEMOS = [
+  ['Demo patient', 'priya.k@example.com'],
+  ['Demo doctor', 'dr.rao@medkyc.com'],
+  ['Demo admin', 'admin@medkyc.com'],
+];
+const inputClass =
+  'w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email: email.trim(), password });
       login(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+      setError(
+        err.response
+          ? err.response.data?.message || 'Login failed'
+          : "Can't reach the server. If this is the live site, it may be waking up. Wait a minute and try again."
+      );
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] font-sans px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ backgroundColor: '#0B2942' }}>
-            <HeartPulse className="w-6 h-6 text-teal-300" />
-          </div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">MedKYC-AI</h1>
-          <p className="text-sm text-gray-500 mt-1.5">Sign in to your health records</p>
-        </div>
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to your health records"
+      footer={<>New here? <Link to="/register" className="font-semibold" style={{ color: C.navy }}>Create an account</Link></>}
+    >
+      <form onSubmit={submit} className="space-y-4">
+        {error && <Notice color="red">{error}</Notice>}
 
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl border border-gray-200/70 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 text-sm px-3.5 py-2.5 rounded-xl">
-              {error}
-            </div>
-          )}
+        <label className="block">
+          <span className="block text-xs font-medium mb-1.5" style={{ color: C.sub }}>Email</span>
+          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
+        </label>
 
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Email</label>
+        <label className="block">
+          <span className="block text-xs font-medium mb-1.5" style={{ color: C.sub }}>Password</span>
+          <div className="relative">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition"
+              type={show ? 'text' : 'password'}
               required
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Password</label>
-            <input
-              type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition"
-              required
+              placeholder="Your password"
+              className={inputClass}
+              style={{ paddingRight: 44 }}
             />
+            <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute" style={{ right: 12, top: 11 }}>
+              {show ? <EyeOff className="w-4 h-4" style={{ color: C.muted }} /> : <Eye className="w-4 h-4" style={{ color: C.muted }} />}
+            </button>
           </div>
+        </label>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ backgroundColor: '#0B2942' }}
-            className="w-full text-white rounded-xl py-2.5 text-sm font-medium hover:opacity-90 transition disabled:opacity-60"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
+        <Button type="submit" loading={loading} className="w-full py-3">Sign in</Button>
+      </form>
 
-        <p className="text-center text-sm text-gray-500 mt-5">
-          New here?{' '}
-          <Link to="/register" className="font-medium hover:underline" style={{ color: '#0B2942' }}>
-            Create an account
-          </Link>
-        </p>
-      </div>
-    </div>
+      {import.meta.env.DEV && (
+        <div className="mt-6 pt-5" style={{ borderTop: '1px solid #EAEBEF' }}>
+          <p className="text-xs mb-2" style={{ color: C.muted }}>Local demo shortcuts</p>
+          <div className="flex flex-wrap gap-2">
+            {DEMOS.map(([label, mail]) => (
+              <button
+                key={mail}
+                type="button"
+                onClick={() => { setEmail(mail); setPassword(DEMO_PASSWORD); }}
+                className="text-xs px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50"
+                style={{ color: C.sub }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </AuthShell>
   );
 }

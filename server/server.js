@@ -30,6 +30,15 @@ const aiLimiter = rateLimit({
   message: { reply: 'Too many requests. Wait a minute and try again.' },
 });
 
+// The emergency page needs no login, so make token-guessing impractical.
+const emergencyLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Try again shortly.' },
+});
+
 app.get('/', (req, res) => res.send('MedKYC-AI backend is running'));
 
 app.use('/api/auth', require('./routes/auth.routes'));
@@ -38,8 +47,13 @@ app.use('/api/bloodbanks', require('./routes/bloodbank.routes'));
 app.use('/api/ambulances', require('./routes/ambulance.routes'));
 app.use('/api/doctor', require('./routes/doctor.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/appointments', require('./routes/appointment.routes'));
+app.use('/api/access-log', require('./routes/accesslog.routes'));
+app.use('/api/vitals', require('./routes/vitals.routes'));
+app.use('/api/emergency/public', emergencyLimiter);
+app.use('/api/emergency', require('./routes/emergency.routes'));
 app.use('/api/symptom', aiLimiter, require('./routes/symptom.routes'));
-//app.use('/api/agent', aiLimiter, require('./routes/agent.routes'));
+app.use('/api/agent', aiLimiter, require('./routes/agent.routes'));
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: allowedOrigins } });
